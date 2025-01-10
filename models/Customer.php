@@ -24,11 +24,31 @@ class Customer
     }
 
     // Update user information
-    public function update($id, $username, $password, $name, $phone, $gender, $address, $role, $email)
-    {
-        $stmt = $this->pdo->prepare('UPDATE users SET username = ?, name = ?, password = ?, phone = ?, gender = ?, address = ?, role = ?, email = ? WHERE id = ?');
-        return $stmt->execute([$username, $password, $name, $phone, $gender, $address, $role, $email, $id]);
+    public function update($id, $username, $password, $name, $phone, $gender, $address, $role, $email) {
+        // Ambil data customer saat ini dari database untuk mendapatkan password dan role lama
+        $currentCustomer = $this->read($id);  // Mendapatkan data customer berdasarkan ID
+    
+        // Jika password baru diberikan, enkripsi password
+        if (!empty($password)) {
+            $password = password_hash($password, PASSWORD_BCRYPT);
+        } else {
+            // Jika tidak ada password baru, gunakan password lama
+            $password = $currentCustomer['password'];
+        }
+    
+        // Jika role baru diberikan, gunakan role baru, jika tidak gunakan role lama
+        if (empty($role)) {
+            $role = $currentCustomer['role'];  // Gunakan role lama jika role baru tidak diberikan
+        }
+    
+        // Query untuk memperbarui data customer
+        $sql = "UPDATE users SET username = ?, name = ?, phone = ?, gender = ?, address = ?, email = ?, password = ?, role = ? WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$username, $name, $phone, $gender, $address, $email, $password, $role, $id]);
     }
+    
+    
+    
 
     // Delete user by ID
     public function delete($id)

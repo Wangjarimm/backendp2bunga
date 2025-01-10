@@ -1,7 +1,22 @@
 <?php
+// Mulai output buffering di awal
+ob_start();  // Menunda pengiriman output ke browser
+
 // Enable error reporting for debugging
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
+
+// Menambahkan header CORS untuk mengizinkan akses dari domain tertentu
+header("Access-Control-Allow-Origin: * "); // Gantilah '*' dengan domain frontendmu untuk lebih aman
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+// Jika menerima request dengan method OPTIONS, kirimkan respons sukses
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200); // Memberikan respons 200 OK
+    exit();
+}
 
 // Include database connection
 include_once 'config/database.php';
@@ -23,19 +38,6 @@ spl_autoload_register(function ($class_name) {
 // Include routes
 include_once 'routes/api.php';
 
-// Menambahkan header CORS untuk mengizinkan akses dari domain tertentu
-header("Access-Control-Allow-Origin: * "); // Gantilah '*' dengan domain frontendmu untuk lebih aman
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
-// Jika menerima request dengan method OPTIONS, kirimkan respons sukses
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200); // Memberikan respons 200 OK
-    exit();
-}
-
-
-// Optionally, you can include other files or configurations here
-// e.g., session_start(); for user authentication
+// Akhiri output buffering dan kirimkan output
+ob_end_flush();
 ?>

@@ -23,14 +23,39 @@ class CustomerController {
             return json_encode(['message' => 'Customer not found']);
         }
     }
-
-    public function update($id, $data) {
-        if ($this->model->update($id, $data['username'], $data['password'], $data['name'], $data['phone'], $data['gender'], $data['address'], $data['role'], $data['email'])) {
+    public function update($id) {
+        // Mengambil data JSON dari body request
+        $input = file_get_contents("php://input");
+        $data = json_decode($input, true);  // Mengurai data JSON
+    
+        // Debug: Cek data yang diterima
+        error_log("Received data: " . print_r($data, true));  // Debugging log
+    
+        // Pastikan username tidak kosong
+        if (empty($data['username'])) {
+            return json_encode(['error' => 'Username tidak boleh kosong']);
+        }
+    
+        // Ambil data customer saat ini dari database untuk mendapatkan password dan role lama
+        $currentCustomer = $this->model->read($id);  // Mendapatkan data customer berdasarkan ID
+    
+        // Gunakan password lama jika tidak ada password baru
+        $password = !empty($data['password']) ? password_hash($data['password'], PASSWORD_BCRYPT) : $currentCustomer['password'];  // Gunakan password lama jika tidak ada password baru
+        $role = !empty($data['role']) ? $data['role'] : $currentCustomer['role'];  // Gunakan role lama jika tidak ada yang baru
+    
+        // Update data customer ke database
+        if ($this->model->update($id, $data['username'], $password, $data['name'], $data['phone'], $data['gender'], $data['address'], $role, $data['email'])) {
             return json_encode(["message" => "Customer successfully updated."]);
         } else {
             return json_encode(["message" => "Failed to update customer."]);
         }
     }
+    
+    
+    
+    
+    
+    
 
     public function delete($id) {
         if ($this->model->delete($id)) {
