@@ -7,22 +7,21 @@ class ServiceController {
     }
 
     public function create($data) {
-        // Check if data is sent via form-data
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
-            $name = $_POST['name'];
-            $price = $_POST['price'];
-            $description = $_POST['description'];
-            $photo = $_FILES['photo']['name']; // Assuming photo is uploaded as a file
-            // Handle file upload
-            move_uploaded_file($_FILES['photo']['tmp_name'], "uploads/" . $photo);
-        } else {
-            // For raw JSON data
-            $name = $data['name'];
-            $price = $data['price'];
-            $description = $data['description'];
-            $photo = $data['photo'];
+        // Ambil data dari request body
+        $input = json_decode(file_get_contents("php://input"), true);
+    
+        // Pastikan semua data tersedia sebelum digunakan
+        $name = isset($input['name']) ? $input['name'] : null;
+        $price = isset($input['price']) ? $input['price'] : null;
+        $description = isset($input['description']) ? $input['description'] : null;
+        $photo = isset($input['photo']) ? $input['photo'] : null; // URL gambar, bukan file upload
+    
+        if (!$name || !$price || !$description || !$photo) {
+            echo json_encode(["success" => false, "message" => "Incomplete data."]);
+            return;
         }
     
+        // Simpan data ke database
         $result = $this->model->create($name, $price, $description, $photo);
     
         if ($result) {
@@ -31,6 +30,7 @@ class ServiceController {
             echo json_encode(["success" => false, "message" => "Failed to add service."]);
         }
     }
+    
     
     
 
@@ -69,6 +69,22 @@ class ServiceController {
             echo json_encode(['message' => 'No services found']);
         }
     }
+    public function getMostOrderedServices()
+    {
+        $services = $this->model->getMostOrderedServices();
+    
+        // Debugging: pastikan hanya data yang diinginkan yang dikirim
+        error_log(print_r($services, true));  // Cek hasil sebelum dikirim
+    
+        if ($services) {
+            echo json_encode($services);  // Mengembalikan hanya data yang relevan
+        } else {
+            echo json_encode(['message' => 'No services found']);
+        }
+    }
+    
+    
+  
 }
 
 ?>

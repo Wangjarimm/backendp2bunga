@@ -1,6 +1,8 @@
 <?php
 
 require_once 'config/database.php';
+require_once 'vendor/autoload.php';
+require_once 'config/midtrans.php';
 require_once 'models/Customer.php';
 require_once 'models/Service.php';
 require_once 'models/Booking.php';
@@ -9,6 +11,8 @@ require_once 'controllers/CustomerController.php';
 require_once 'controllers/ServiceController.php';
 require_once 'controllers/BookingController.php';
 require_once 'controllers/BookingServiceController.php';
+require_once 'controllers/PaymentController.php'; // Add the PaymentController
+
 
 // Pastikan $pdo terdefinisi dengan benar
 if (!isset($pdo)) {
@@ -20,6 +24,7 @@ $customerController = new CustomerController($pdo);
 $serviceController = new ServiceController($pdo);
 $bookingController = new BookingController($pdo);
 $bookingServiceController = new BookingServiceController($pdo);
+$paymentController = new PaymentController($pdo); // Initialize the PaymentController
 
 // Menangani permintaan berdasarkan metode dan URL
 $requestMethod = $_SERVER['REQUEST_METHOD'];
@@ -70,11 +75,14 @@ if (preg_match('/\/index\.php\/customer\/?(\d+)?/', $requestUri, $matches)) {
     echo $customerController->login($inputData);
 }
 
-// Routing untuk Service
-if (preg_match('/\/index\.php\/service\/?(\d+)?/', $requestUri, $matches)) {
+// Routing untuk Service (tambahkan endpoint most-ordered-services)
+if (preg_match('/\/index\.php\/most-ordered-services/', $requestUri)) {
+    $serviceController->getMostOrderedServices();
+} elseif (preg_match('/\/index\.php\/service\/?(\d+)?/', $requestUri, $matches)) {
     $id = isset($matches[1]) ? $matches[1] : null;
     echo handleRoutes($requestMethod, $serviceController, $inputData, $id);
 }
+
 
 // Routing untuk Booking
 if (preg_match('/\/index\.php\/booking\/?(\d+)?/', $requestUri, $matches)) {
@@ -86,6 +94,15 @@ if (preg_match('/\/index\.php\/booking\/?(\d+)?/', $requestUri, $matches)) {
 if (preg_match('/\/index\.php\/booking_service\/?(\d+)?/', $requestUri, $matches)) {
     $id = isset($matches[1]) ? $matches[1] : null;
     echo handleRoutes($requestMethod, $bookingServiceController, $inputData, $id);
+}
+
+// Routing untuk Payment
+if (preg_match('/\/index\.php\/payment\/create/', $requestUri)) {
+    // Rute untuk membuat pembayaran
+    echo $paymentController->createPayment($inputData);
+} elseif (preg_match('/\/index\.php\/payment\/midtrans_notification/', $requestUri)) {
+    // Rute untuk menerima notifikasi Midtrans
+    echo $paymentController->midtransNotification($inputData);
 }
 
 ?>

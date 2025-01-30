@@ -6,6 +6,12 @@ class BookingService {
         $this->pdo = $pdo;
     }
 
+      // Insert a service into booking_services
+      public function addServiceToBooking($bookingId, $serviceId) {
+        $stmt = $this->pdo->prepare('INSERT INTO booking_services (booking_id, service_id) VALUES (?, ?)');
+        return $stmt->execute([$bookingId, $serviceId]);
+    }
+
     // Create a new booking service
     public function create($bookingId, $serviceId) {
         $stmt = $this->pdo->prepare('INSERT INTO booking_services (id_booking, service_id) VALUES (?, ?)');

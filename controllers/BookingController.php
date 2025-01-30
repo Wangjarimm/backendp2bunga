@@ -1,23 +1,54 @@
-<?php 
+<?php
 class BookingController {
-    private $model;
+    private $bookingModel;
+    private $bookingServiceModel;
 
     public function __construct($pdo) {
-        $this->model = new Booking($pdo);
+        $this->bookingModel = new Booking($pdo);
+        $this->bookingServiceModel = new BookingService($pdo);
     }
 
-    // Create a new booking
-    public function create($data) {
-        if ($this->model->create($data['id_booking'], $data['user_id'], $data['name'], $data['phone'], $data['email'], $data['total_price'], $data['date'], $data['payment_status'])) {
-            echo json_encode(["message" => "Booking successfully created."]);
+    // Method to handle booking creation with services
+    public function createBooking($data) {
+        // Buat booking baru
+        $bookingId = $this->bookingModel->create(
+            $data['user_id'], 
+            $data['name'], 
+            $data['phone'], 
+            $data['email'], 
+            $data['total_price'], 
+            $data['date'], 
+            $data['payment_status']
+        );
+    
+        if ($bookingId) {
+            // Simpan layanan yang dipilih
+            foreach ($data['services'] as $serviceId) {
+                $success = $this->bookingServiceModel->addServiceToBooking($bookingId, $serviceId);
+                if (!$success) {
+                    // Handle error jika penyimpanan layanan gagal
+                    echo json_encode(["message" => "Failed to add service to booking."]);
+                    return;
+                }
+            }
+    
+            echo json_encode(["message" => "Booking successfully created.", "booking_id" => $bookingId]);
         } else {
-            echo json_encode(["message" => "Failed to create booking."]);
+            echo json_encode(["message" => "Booking failed."]);
         }
     }
+    
+    
+    
 
-    // Read booking by ID
+    // Metode lain yang mungkin sudah ada
+    public function create($data) {
+        // Menggunakan metode createBooking yang sudah ada
+        $this->createBooking($data);
+    }
+
     public function read($id) {
-        $booking = $this->model->read($id);
+        $booking = $this->bookingModel->read($id);
         if ($booking) {
             echo json_encode($booking);
         } else {
@@ -25,32 +56,47 @@ class BookingController {
         }
     }
 
-    // Update booking information
     public function update($id, $data) {
-        if ($this->model->update($data['id_booking'], $id, $data['user_id'], $data['name'], $data['phone'], $data['email'], $data['total_price'], $data['date'], $data['payment_status'])) {
+        if ($this->bookingModel->update(
+            $data['id_booking'], 
+            $id, 
+            $data['user_id'], 
+            $data['name'], 
+            $data['phone'], 
+            $data['email'], 
+            $data['total_price'], 
+            $data['date'], 
+            $data['payment_status']
+        )) {
             echo json_encode(["message" => "Booking successfully updated."]);
         } else {
             echo json_encode(["message" => "Failed to update booking."]);
         }
     }
 
-    // Delete booking by ID
     public function delete($id) {
-        if ($this->model->delete($id)) {
+        if ($this->bookingModel->delete($id)) {
             echo json_encode(["message" => "Booking successfully deleted."]);
         } else {
             echo json_encode(["message" => "Failed to delete booking."]);
         }
     }
 
-    // List all bookings
     public function listAll() {
-        $bookings = $this->model->listAll();
+        $bookings = $this->bookingModel->listAllWithServices();
+    
         if (count($bookings) > 0) {
             echo json_encode($bookings);
         } else {
             echo json_encode(["message" => "No bookings found."]);
         }
     }
+    
+    
 }
+
+
+
+
+
 ?>
