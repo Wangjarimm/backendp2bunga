@@ -61,18 +61,18 @@ class Booking
         if (!$stmt->execute([$id])) {
             return false; // Gagal menghapus data di payments
         }
-    
+
         // Hapus layanan terkait di booking_services
         $stmt = $this->pdo->prepare('DELETE FROM booking_services WHERE booking_id = ?');
         if (!$stmt->execute([$id])) {
             return false; // Gagal menghapus layanan terkait
         }
-    
+
         // Hapus booking utama setelah semua data terkait dihapus
         $stmt = $this->pdo->prepare('DELETE FROM bookings WHERE id_booking = ?');
         return $stmt->execute([$id]);
     }
-    
+
 
 
     // List all bookings
@@ -92,6 +92,56 @@ class Booking
             LEFT JOIN booking_services bs ON b.id_booking = bs.booking_id
             LEFT JOIN services s ON bs.service_id = s.id
         ');
+
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Format hasil agar setiap booking mengelompokkan layanan terkait
+        $bookings = [];
+        foreach ($results as $row) {
+            $bookingId = isset($row['id_booking']) ? $row['id_booking'] : null;
+            if (!isset($bookings[$bookingId])) {
+                $bookings[$bookingId] = [
+                    'id_booking' => $row['id_booking'],
+                    'user_id' => $row['user_id'],
+                    'name' => $row['name'],
+                    'phone' => $row['phone'],
+                    'email' => $row['email'],
+                    'total_price' => $row['total_price'],
+                    'date' => $row['date'],
+                    'payment_status' => $row['payment_status'],
+                    'services' => []
+                ];
+            }
+
+            if ($row['service_id']) {
+                $bookings[$bookingId]['services'][] = [
+                    'id_service' => $row['service_id'],
+                    'nama_service' => $row['nama_service'],
+                    'harga' => $row['harga']
+                ];
+            }
+        }
+
+        return array_values($bookings); // Reset array keys
+    }
+
+    // Method untuk mengambil data booking berdasarkan rentang tanggal
+    public function listByDateRange($startDate, $endDate)
+    {
+        // Query untuk mengambil data booking berdasarkan rentang tanggal
+        $sql = '
+        SELECT b.id_booking AS id_booking, b.user_id, b.name, b.phone, b.email, b.total_price, b.date, b.payment_status, 
+               s.id AS service_id, s.nama_service, s.harga
+        FROM bookings b
+        LEFT JOIN booking_services bs ON b.id_booking = bs.booking_id
+        LEFT JOIN services s ON bs.service_id = s.id
+        WHERE b.date BETWEEN :start_date AND :end_date
+    ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':start_date', $startDate);
+        $stmt->bindParam(':end_date', $endDate);
+        $stmt->execute();
 
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

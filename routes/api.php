@@ -90,6 +90,22 @@ if (preg_match('/\/index\.php\/booking\/?(\d+)?/', $requestUri, $matches)) {
     echo handleRoutes($requestMethod, $bookingController, $inputData, $id);
 }
 
+// Routing untuk Booking berdasarkan rentang tanggal
+if (preg_match('/\/index\.php\/range/', $requestUri)) {
+    // Ambil startDate dan endDate dari parameter query string
+    $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : null;
+    $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : null;
+
+    // Pastikan kedua tanggal ada
+    if ($startDate && $endDate) {
+        echo $bookingController->listByDateRange($startDate, $endDate);
+    } else {
+        echo json_encode(["message" => "Start date and end date are required."]);
+    }
+}
+
+
+
 // Routing untuk BookingService
 if (preg_match('/\/index\.php\/booking_service\/?(\d+)?/', $requestUri, $matches)) {
     $id = isset($matches[1]) ? $matches[1] : null;

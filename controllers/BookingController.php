@@ -1,26 +1,29 @@
 <?php
-class BookingController {
+class BookingController
+{
     private $bookingModel;
     private $bookingServiceModel;
 
-    public function __construct($pdo) {
+    public function __construct($pdo)
+    {
         $this->bookingModel = new Booking($pdo);
         $this->bookingServiceModel = new BookingService($pdo);
     }
 
     // Method to handle booking creation with services
-    public function createBooking($data) {
+    public function createBooking($data)
+    {
         // Buat booking baru
         $bookingId = $this->bookingModel->create(
-            $data['user_id'], 
-            $data['name'], 
-            $data['phone'], 
-            $data['email'], 
-            $data['total_price'], 
-            $data['date'], 
+            $data['user_id'],
+            $data['name'],
+            $data['phone'],
+            $data['email'],
+            $data['total_price'],
+            $data['date'],
             $data['payment_status']
         );
-    
+
         if ($bookingId) {
             // Simpan layanan yang dipilih
             foreach ($data['services'] as $serviceId) {
@@ -31,23 +34,25 @@ class BookingController {
                     return;
                 }
             }
-    
+
             echo json_encode(["message" => "Booking successfully created.", "booking_id" => $bookingId]);
         } else {
             echo json_encode(["message" => "Booking failed."]);
         }
     }
-    
-    
-    
+
+
+
 
     // Metode lain yang mungkin sudah ada
-    public function create($data) {
+    public function create($data)
+    {
         // Menggunakan metode createBooking yang sudah ada
         $this->createBooking($data);
     }
 
-    public function read($id) {
+    public function read($id)
+    {
         $booking = $this->bookingModel->read($id);
         if ($booking) {
             echo json_encode($booking);
@@ -56,16 +61,17 @@ class BookingController {
         }
     }
 
-    public function update($id, $data) {
+    public function update($id, $data)
+    {
         if ($this->bookingModel->update(
-            $data['id_booking'], 
-            $id, 
-            $data['user_id'], 
-            $data['name'], 
-            $data['phone'], 
-            $data['email'], 
-            $data['total_price'], 
-            $data['date'], 
+            $data['id_booking'],
+            $id,
+            $data['user_id'],
+            $data['name'],
+            $data['phone'],
+            $data['email'],
+            $data['total_price'],
+            $data['date'],
             $data['payment_status']
         )) {
             echo json_encode(["message" => "Booking successfully updated."]);
@@ -74,7 +80,8 @@ class BookingController {
         }
     }
 
-    public function delete($id) {
+    public function delete($id)
+    {
         if ($this->bookingModel->delete($id)) {
             echo json_encode(["message" => "Booking successfully deleted."]);
         } else {
@@ -82,21 +89,34 @@ class BookingController {
         }
     }
 
-    public function listAll() {
+    public function listAll()
+    {
         $bookings = $this->bookingModel->listAllWithServices();
-    
+
         if (count($bookings) > 0) {
             echo json_encode($bookings);
         } else {
             echo json_encode(["message" => "No bookings found."]);
         }
     }
-    
-    
+
+    // Method baru untuk mengambil data booking berdasarkan rentang tanggal
+    // Method untuk mengambil data booking berdasarkan rentang tanggal
+    public function listByDateRange($startDate, $endDate)
+    {
+        // Validasi input tanggal
+        if (empty($startDate) || empty($endDate)) {
+            echo json_encode(["message" => "Start date and end date are required."]);
+            return;
+        }
+
+        // Ambil data booking berdasarkan rentang tanggal
+        $bookings = $this->bookingModel->listByDateRange($startDate, $endDate);
+
+        if (count($bookings) > 0) {
+            echo json_encode($bookings);
+        } else {
+            echo json_encode(["message" => "No bookings found for the specified date range."]);
+        }
+    }
 }
-
-
-
-
-
-?>
