@@ -174,4 +174,61 @@ class Booking
 
         return array_values($bookings); // Reset array keys
     }
+
+    public function listByUser($userId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                b.id_booking AS id_booking,
+                b.user_id,
+                c.username,
+                c.phone,
+                c.email,
+                b.total_price,
+                b.date,
+                b.payment_status,
+                b.created_at
+            FROM bookings b
+            JOIN users c ON b.user_id = c.id
+            WHERE b.user_id = ? -- Pastikan hanya mengambil data dari user yang diminta
+        ");
+        $stmt->execute([$userId]);
+        $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+        // Ambil detail layanan untuk setiap booking
+        foreach ($bookings as &$booking) {
+            $stmtServices = $this->pdo->prepare("
+                SELECT 
+                    s.id AS id_service,
+                    s.nama_service AS nama_service,
+                    s.harga AS harga
+                FROM booking_services bs
+                JOIN services s ON bs.service_id = s.id
+                WHERE bs.booking_id = ?
+            ");
+            $stmtServices->execute([$booking['id_booking']]);
+            $booking['services'] = $stmtServices->fetchAll(PDO::FETCH_ASSOC);
+        }
+    
+        return $bookings;
+    }
+    
+    public function getBookingStatsForToday($maxSlotsPerDay)
+{
+    $today = date('Y-m-d'); // Format tanggal hari ini
+
+    // Hitung jumlah booking untuk hari ini
+    $stmt = $this->pdo->prepare("SELECT COUNT(*) AS total_bookings FROM bookings WHERE date = ?");
+    $stmt->execute([$today]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $totalBookings = $result['total_bookings'] ?? 0;
+    $remainingSlots = max(0, $maxSlotsPerDay - $totalBookings); // Pastikan tidak negatif
+
+    return [
+        'total_bookings' => $totalBookings,
+        'remaining_slots' => $remainingSlots
+    ];
+}
+
 }

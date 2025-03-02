@@ -121,4 +121,20 @@ if (preg_match('/\/index\.php\/payment\/create/', $requestUri)) {
     echo $paymentController->midtransNotification($inputData);
 }
 
+// Routing untuk Booking berdasarkan User
+if (preg_match('/\/index\.php\/reservation\/user\/?(\d+)?/', $requestUri, $matches)) {
+    $id_user = isset($matches[1]) ? $matches[1] : null;
+    if ($id_user) {
+        echo $bookingController->listByUser($id_user);
+    } else {
+        echo json_encode(["message" => "User ID is required."]);
+    }
+}
+
+// Routing untuk mendapatkan jumlah booking hari ini dan sisa slot
+if (preg_match('/\/index\.php\/stats/', $requestUri)) {
+    echo $bookingController->getBookingStats();
+}
+
+
 ?>

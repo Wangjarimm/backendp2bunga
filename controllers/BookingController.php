@@ -119,4 +119,37 @@ class BookingController
             echo json_encode(["message" => "No bookings found for the specified date range."]);
         }
     }
+
+    public function listByUser($userId)
+    {
+        header("Content-Type: application/json");
+
+        // Validasi input
+        if (empty($userId)) {
+            http_response_code(400);
+            echo json_encode(["message" => "User ID is required."]);
+            exit;
+        }
+
+        // Ambil data booking berdasarkan user_id dari model
+        $bookings = $this->bookingModel->listByUser($userId);
+
+        if (!empty($bookings)) {
+            http_response_code(200);
+            echo json_encode($bookings);
+        } else {
+            http_response_code(404);
+            echo json_encode(["message" => "No bookings found for this user."]);
+        }
+
+        exit; // Tambahkan exit untuk mencegah output ganda
+    }
+
+    public function getBookingStats()
+    {
+        $maxSlotsPerDay = 3; // Ganti dengan jumlah slot maksimum per hari sesuai kebutuhan
+        $stats = $this->bookingModel->getBookingStatsForToday($maxSlotsPerDay);
+
+        echo json_encode($stats);
+    }
 }
